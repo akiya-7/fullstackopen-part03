@@ -30,6 +30,7 @@ app.get("/", (req, res) => {
 
 app.get("/api/persons", (req, res) => {
     res.send(persons)
+
 })
 
 app.get("/api/info", (req, res) => {
@@ -40,6 +41,23 @@ app.get("/api/info", (req, res) => {
 
     res.send(info)
 })
+
+app.get("/api/persons/:id", (req, res) => {
+    const id = req.params.id;
+    const person = persons.find((person) => person.id === id)
+
+    if (person)
+        res.send(person)
+
+})
+app.delete("/api/persons/:id", (req, res) => {
+    const id = req.params.id
+    persons = persons.filter(person => person.id !== id)
+
+    res.status(204)
+        .end()
+})
+
 
 const PORT = 3001
 app.listen(PORT, () =>
