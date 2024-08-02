@@ -43,6 +43,17 @@ app.post("/api/persons", (req, res) => {
             .json({error: "Please ensure a name and number is entered"})
     }
 
+    const isExisting = () => {
+        const names = persons.map(person => person.name)
+        return names.includes(newPerson.name)
+    }
+    if (isExisting()) {
+        return res.status(400)
+            .json({error: "Name is already in use"})
+    }
+
+    persons.map(person => person.name)
+
     const generateId = () => {
         return (Math.random()).toString().substr(2, 9);
     };
