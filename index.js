@@ -1,8 +1,17 @@
 const express = require('express');
+const morgan = require('morgan');
+
 const app = express();
 
-app.use(express.json())
+// Getting response
+morgan.token('jsonResponse', (req, res)=>{
+    console.log(req.body[0]);
+    if(req.body)
+        return JSON.stringify(req.body)})
+const postPerameters = ':method :url :status :res[content-length] - :response-time ms :jsonResponse'
 
+app.use(express.json())
+app.use(morgan(postPerameters))
 
 let persons = [
     {
@@ -52,12 +61,10 @@ app.post("/api/persons", (req, res) => {
             .json({error: "Name is already in use"})
     }
 
-    persons.map(person => person.name)
-
     const generateId = () => {
         return (Math.random()).toString().substr(2, 9);
     };
-    console.log(newPerson);
+
     const person = {
         name: newPerson["name"],
         number: newPerson["number"],
@@ -82,7 +89,8 @@ app.get("/api/persons/:id", (req, res) => {
 
     if (person)
         res.send(person)
-
+    else
+        res.status(404).json({error: "This person does not exist"})
 })
 app.delete("/api/persons/:id", (req, res) => {
     const id = req.params.id
@@ -91,7 +99,6 @@ app.delete("/api/persons/:id", (req, res) => {
     res.status(204)
         .end()
 })
-
 
 const PORT = 3001
 app.listen(PORT, () =>
