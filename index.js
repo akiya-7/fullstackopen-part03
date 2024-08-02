@@ -1,6 +1,9 @@
 const express = require('express');
 const app = express();
 
+app.use(express.json())
+
+
 let persons = [
     {
         "id": "1",
@@ -31,6 +34,26 @@ app.get("/", (req, res) => {
 app.get("/api/persons", (req, res) => {
     res.send(persons)
 
+})
+app.post("/api/persons", (req, res) => {
+    const newPerson = req.body;
+
+    if (!newPerson["name"] || !newPerson["number"]) {
+        return res.status(400)
+            .json({error: "Please ensure a name and number is entered"})
+    }
+
+    const generateId = () => {
+        return (Math.random()).toString().substr(2, 9);
+    };
+    console.log(newPerson);
+    const person = {
+        name: newPerson["name"],
+        number: newPerson["number"],
+        id: generateId()
+    }
+    persons = persons.concat(person);
+    res.json(person)
 })
 
 app.get("/api/info", (req, res) => {
