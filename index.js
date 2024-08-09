@@ -8,10 +8,11 @@ morgan.token('jsonResponse', (req, res)=>{
     console.log(req.body[0]);
     if(req.body)
         return JSON.stringify(req.body)})
-const postPerameters = ':method :url :status :res[content-length] - :response-time ms :jsonResponse'
+const postParameters = ':method :url :status :res[content-length] - :response-time ms :jsonResponse'
 
 app.use(express.json())
-app.use(morgan(postPerameters))
+app.use(morgan(postParameters))
+app.use(express.static('dist'))
 
 let persons = [
     {
@@ -100,6 +101,6 @@ app.delete("/api/persons/:id", (req, res) => {
         .end()
 })
 
-const PORT = 3001
+const PORT = 3000
 app.listen(PORT, () =>
     console.log(`Server started on port: ${PORT}`))
