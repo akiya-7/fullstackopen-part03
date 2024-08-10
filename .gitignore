@@ -1,4 +1,4 @@
-/.env
+.env
 /node_modules/debug/.coveralls.yml
 /node_modules/qs/.editorconfig
 /node_modules/side-channel/.editorconfig
