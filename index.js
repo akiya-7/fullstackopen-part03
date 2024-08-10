@@ -1,14 +1,16 @@
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
+const Person = require('./models/person')
 
 const app = express();
 
 // Getting response
-morgan.token('jsonResponse', (req, res)=>{
+morgan.token('jsonRequest', (req, res)=>{
     console.log(req.body[0]);
     if(req.body)
         return JSON.stringify(req.body)})
-const postParameters = ':method :url :status :res[content-length] - :response-time ms :jsonResponse'
+const postParameters = ':method :url :status :res[content-length] - :response-time ms :jsonRequest'
 
 app.use(express.json())
 app.use(morgan(postParameters))
@@ -42,37 +44,26 @@ app.get("/", (req, res) => {
 })
 
 app.get("/api/persons", (req, res) => {
-    res.send(persons)
-
+    Person
+        .find({})
+        .then(result => {
+            res.json(result)
+        })
 })
 app.post("/api/persons", (req, res) => {
     const newPerson = req.body;
 
-    if (!newPerson["name"] || !newPerson["number"]) {
-        return res.status(400)
-            .json({error: "Please ensure a name and number is entered"})
+    if (!newPerson) {
+        return res.status(400).json({error: 'name or number is missing'})
     }
 
-    const isExisting = () => {
-        const names = persons.map(person => person.name)
-        return names.includes(newPerson.name)
-    }
-    if (isExisting()) {
-        return res.status(400)
-            .json({error: "Name is already in use"})
-    }
+    const person = new Person({
+        name: newPerson.name,
+        number: newPerson.number,
+    })
 
-    const generateId = () => {
-        return (Math.random()).toString().substr(2, 9);
-    };
-
-    const person = {
-        name: newPerson["name"],
-        number: newPerson["number"],
-        id: generateId()
-    }
-    persons = persons.concat(person);
-    res.json(person)
+    person.save()
+        .then(savedNote => res.json(savedNote))
 })
 
 app.get("/api/info", (req, res) => {
@@ -86,12 +77,10 @@ app.get("/api/info", (req, res) => {
 
 app.get("/api/persons/:id", (req, res) => {
     const id = req.params.id;
-    const person = persons.find((person) => person.id === id)
 
-    if (person)
-        res.send(person)
-    else
-        res.status(404).json({error: "This person does not exist"})
+    Person.findById(id)
+        .then(person => res.json(person))
+
 })
 app.delete("/api/persons/:id", (req, res) => {
     const id = req.params.id
@@ -101,6 +90,6 @@ app.delete("/api/persons/:id", (req, res) => {
         .end()
 })
 
-const PORT = 3000
+const PORT = process.env.PORT
 app.listen(PORT, () =>
     console.log(`Server started on port: ${PORT}`))
