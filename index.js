@@ -6,7 +6,7 @@ const Person = require('./models/person')
 const app = express();
 
 // Getting response
-morgan.token('jsonRequest', (req, res)=>{
+morgan.token('jsonRequest', (req)=>{
     console.log(req.body[0]);
     if(req.body)
         return JSON.stringify(req.body)})
@@ -15,33 +15,6 @@ const postParameters = ':method :url :status :res[content-length] - :response-ti
 app.use(express.json())
 app.use(morgan(postParameters))
 app.use(express.static('dist'))
-
-let persons = [
-    {
-        "id": "1",
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": "2",
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": "3",
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": "4",
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]
-
-app.get("/", (req, res) => {
-    res.send('<h1>Hello World</h1>')
-})
 
 app.get("/api/persons", (req, res) => {
     Person
@@ -68,27 +41,64 @@ app.post("/api/persons", (req, res) => {
 
 app.get("/api/info", (req, res) => {
     const dayInfo = new Date(Date.now())
+    let personsLength;
 
-    const info =
-        `<p>Phonebook has info for ${persons.length} <br/><br/> ${dayInfo}</p>`
-
-    res.send(info)
+    Person.find({}).then(list => {
+        personsLength = list.length
+        const info = `<p>Phonebook has info for ${personsLength} people <br/><br/> ${dayInfo}</p>`
+        res.send(info)
+    })
 })
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
     const id = req.params.id;
 
     Person.findById(id)
-        .then(person => res.json(person))
+        .then(person =>
+        {
+            if (person){
+                res.json(person)
+            }
+            else{
+                res.status(404)
+                    .end()
+            }
+        })
+        .catch(error => next(error))
 
 })
+app.put("/api/persons/:id", (req, res) => {
+    const id = req.params.id;
+    const updatedInfo = req.body;
+
+    Person.findByIdAndUpdate(id, {id: id, name: updatedInfo.name, number: updatedInfo.number}).then(
+        update => res.json(update)
+    )
+})
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+}
+app.use(errorHandler)
+
 app.delete("/api/persons/:id", (req, res) => {
     const id = req.params.id
-    persons = persons.filter(person => person.id !== id)
+    Person.findByIdAndDelete(id).then(result => console.log(result.name, "has been deleted"))
 
     res.status(204)
         .end()
 })
+
+const unknownEndpoint = (req, res) => {
+    res.status(404).send({error: 'unknown endpoint'})
+}
+app.use(unknownEndpoint)
 
 const PORT = process.env.PORT
 app.listen(PORT, () =>
